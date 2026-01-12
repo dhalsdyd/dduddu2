@@ -9,6 +9,12 @@ import sys
 import subprocess
 import shutil
 
+# Windows 환경에서 UTF-8 출력 지원
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
 def build_exe():
     """게임을 EXE 파일로 빌드합니다."""
     
