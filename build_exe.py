@@ -22,6 +22,14 @@ def build_exe():
     print("🎮 뚜뚜의 어드벤처 - EXE 빌드 시작")
     print("="*60)
     
+    # 0. leaderboard.json이 없으면 생성
+    if not os.path.exists("leaderboard.json"):
+        print("📝 leaderboard.json 파일을 생성합니다...")
+        import json
+        with open("leaderboard.json", "w", encoding="utf-8") as f:
+            json.dump([], f)
+        print("✅ leaderboard.json 생성 완료!")
+    
     # 1. PyInstaller 설치 확인
     try:
         import PyInstaller
@@ -45,13 +53,16 @@ def build_exe():
         "--windowed",  # 콘솔 창 숨기기
         "-y",  # 기존 출력 디렉토리 자동 삭제
         "--add-data", f"assets{os.pathsep}assets",  # assets 폴더 포함
-        "--add-data", f"leaderboard.json{os.pathsep}.",  # leaderboard.json 포함
         "--hidden-import", "pygame",
         "--hidden-import", "cv2",
         "--hidden-import", "serial",
         "--collect-all", "pygame",
         "--collect-all", "cv2",
     ]
+    
+    # leaderboard.json이 있으면 포함
+    if os.path.exists("leaderboard.json"):
+        pyinstaller_args.extend(["--add-data", f"leaderboard.json{os.pathsep}."])
     
     # 아이콘 파일이 있으면 추가
     if os.path.exists(icon_file):
