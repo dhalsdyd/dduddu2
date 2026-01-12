@@ -2,3 +2,4 @@ pygame==2.5.2
 opencv-python==4.8.1.78
 pyserial==3.5
 pyinstaller==5.13.0
+Pillow>=10.0.0
