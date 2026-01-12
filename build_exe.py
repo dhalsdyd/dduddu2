@@ -43,6 +43,7 @@ def build_exe():
         "--name", app_name,
         "--onefile",  # 단일 실행 파일
         "--windowed",  # 콘솔 창 숨기기
+        "-y",  # 기존 출력 디렉토리 자동 삭제
         "--add-data", f"assets{os.pathsep}assets",  # assets 폴더 포함
         "--add-data", f"leaderboard.json{os.pathsep}.",  # leaderboard.json 포함
         "--hidden-import", "pygame",
@@ -64,7 +65,12 @@ def build_exe():
     print()
     
     try:
-        subprocess.check_call(pyinstaller_args)
+        result = subprocess.run(pyinstaller_args, capture_output=True, text=True)
+        if result.returncode != 0:
+            print("\n❌ PyInstaller 에러:")
+            print(result.stdout)
+            print(result.stderr)
+            raise subprocess.CalledProcessError(result.returncode, pyinstaller_args)
         print("\n✅ 빌드 성공!")
         
         # 5. 결과 파일 위치 알려주기
@@ -144,11 +150,8 @@ if __name__ == "__main__":
     success = build_exe()
     
     if success:
-        # 정리 여부 확인
-        response = input("\n빌드 파일을 정리하시겠습니까? (y/n): ").strip().lower()
-        if response == 'y':
-            clean_build_files()
-        
+        clean_build_files()        
         print("\n✨ 모든 작업이 완료되었습니다!")
     else:
         print("\n❌ 빌드에 실패했습니다. 오류를 확인하세요.")
+        sys.exit(1)
