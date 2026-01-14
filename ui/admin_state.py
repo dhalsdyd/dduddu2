@@ -8,7 +8,7 @@ from typing import Optional, List, Dict
 import config as cfg
 from core.viewport import Viewport
 from core.fonts import FontPack
-from core.leaderboard import load_scores, save_score, DATA_FILE
+from core.leaderboard import load_scores, save_score, reset_leaderboard, DATA_FILE
 from core.path_utils import get_asset_path, safe_image_load
 from core.settings import get_camera_index, set_camera_index, get_serial_port, set_serial_port
 
@@ -53,6 +53,7 @@ class AdminState:
         self.edit_mode = False
         self.edit_field = None  # 'name', 'score', etc.
         self.edit_value = ""
+        self.reset_confirm = False  # 초기화 확인 모드
         
         # UI 상태
         self.tab = "serial"  # 'serial', 'camera', 'leaderboard'
@@ -346,6 +347,14 @@ class AdminState:
         self.edit_field = None
         self.edit_value = ""
     
+    def _reset_leaderboard(self):
+        """리더보드 초기화"""
+        reset_leaderboard()
+        self._load_leaderboard()
+        self.selected_row = 0
+        self.reset_confirm = False
+        print("[ADMIN] 리더보드가 초기 상태로 초기화되었습니다")
+    
     # ========== 라이프사이클 ==========
     def enter(self):
         """상태 진입"""
@@ -440,18 +449,28 @@ class AdminState:
             
             # 리더보드 탭
             elif self.tab == "leaderboard":
-                if e.key == pygame.K_UP:
-                    self.selected_row = max(0, self.selected_row - 1)
-                elif e.key == pygame.K_DOWN:
-                    self.selected_row = min(len(self.leaderboard_data) - 1, self.selected_row + 1)
-                elif e.key == pygame.K_DELETE or e.key == pygame.K_BACKSPACE:
-                    self._delete_selected_row()
-                elif e.key == pygame.K_n:  # Edit Name
-                    self._edit_selected_row("name")
-                elif e.key == pygame.K_s:  # Edit Score
-                    self._edit_selected_row("score")
-                elif e.key == pygame.K_r:  # Reload
-                    self._load_leaderboard()
+                # 초기화 확인 모드일 때
+                if self.reset_confirm:
+                    if e.key == pygame.K_y:  # Yes
+                        self._reset_leaderboard()
+                    elif e.key == pygame.K_n or e.key == pygame.K_ESCAPE:  # No
+                        self.reset_confirm = False
+                # 일반 모드일 때
+                else:
+                    if e.key == pygame.K_UP:
+                        self.selected_row = max(0, self.selected_row - 1)
+                    elif e.key == pygame.K_DOWN:
+                        self.selected_row = min(len(self.leaderboard_data) - 1, self.selected_row + 1)
+                    elif e.key == pygame.K_DELETE or e.key == pygame.K_BACKSPACE:
+                        self._delete_selected_row()
+                    elif e.key == pygame.K_n:  # Edit Name
+                        self._edit_selected_row("name")
+                    elif e.key == pygame.K_s:  # Edit Score
+                        self._edit_selected_row("score")
+                    elif e.key == pygame.K_r:  # Reload
+                        self._load_leaderboard()
+                    elif e.key == pygame.K_x:  # Reset (초기화)
+                        self.reset_confirm = True
     
     # ========== 업데이트 ==========
     def update(self, dt: float):
@@ -775,7 +794,18 @@ class AdminState:
         y += S(30)
         
         # 버튼 안내
-        if self.edit_mode:
+        if self.reset_confirm:
+            # 초기화 확인 메시지
+            confirm_text = "정말로 리더보드를 초기화하시겠습니까?"
+            confirm_surf = fonts.h3.render(confirm_text, True, cfg.WARN)
+            canvas.blit(confirm_surf, (x, y))
+            y += S(50)
+            
+            help_lines = [
+                "Y: 예, 초기화합니다",
+                "N: 아니오, 취소합니다"
+            ]
+        elif self.edit_mode:
             help_lines = [
                 "Enter: 저장",
                 "ESC: 취소"
@@ -786,7 +816,8 @@ class AdminState:
                 "N: 이름 편집",
                 "S: 점수 편집",
                 "Delete: 삭제",
-                "R: 새로고침"
+                "R: 새로고침",
+                "X: 리더보드 초기화"
             ]
         
         for line in help_lines:

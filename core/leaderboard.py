@@ -36,6 +36,13 @@ def get_close_board(data, topk=5):
     rows.sort(key=lambda x: x["best_close_cm"])
     return rows[:topk]
 
+def reset_leaderboard():
+    """리더보드를 빈 배열로 초기화"""
+    sample = []
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(sample, f, ensure_ascii=False, indent=2)
+    print("[LEADERBOARD] 리더보드가 초기화되었습니다")
+
 def save_score(name: str, best_fast_ms: Optional[int] = None, best_close_cm: Optional[float] = None):
     """새로운 기록을 리더보드에 저장"""
     # 기존 데이터 로드
