@@ -1,6 +1,7 @@
 # main.py
 # pip install pygame==2.5.2 opencv-python
 import pygame, sys
+import multiprocessing
 import config as cfg
 from core.viewport import Viewport
 from core.fonts import make_fonts
@@ -111,4 +112,5 @@ def main():
     sys.exit(0)
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     main()
